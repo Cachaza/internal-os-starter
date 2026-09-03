@@ -1,0 +1,43 @@
+{
+	"name": "internal-os-starter",
+	"private": true,
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"type": "module",
+	"scripts": {
+		"dev": "turbo run dev",
+		"build": "turbo run build",
+		"check-types": "turbo run check-types",
+		"dev:web": "turbo run dev -F web --",
+		"dev:worker": "turbo run dev -F worker --",
+		"dev:stack": "pnpm run db:start && pnpm run db:migrate && pnpm run dev",
+		"db:push": "turbo run db:push -F @internal-os/db --",
+		"db:studio": "turbo run db:studio -F @internal-os/db --",
+		"db:generate": "turbo run db:generate -F @internal-os/db --",
+		"db:migrate": "turbo run db:migrate -F @internal-os/db --",
+		"db:start": "docker compose up -d postgres",
+		"db:watch": "docker compose up postgres",
+		"db:stop": "docker compose stop postgres",
+		"db:down": "docker compose down postgres",
+		"docker:build": "docker compose build",
+		"docker:up": "docker compose up -d --build",
+		"docker:down": "docker compose down",
+		"docker:logs": "docker compose logs -f",
+		"check": "biome check --write ."
+	},
+	"dependencies": {
+		"@internal-os/env": "workspace:*",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.11",
+		"@internal-os/config": "workspace:*",
+		"@types/node": "catalog:",
+		"turbo": "^2.10.12",
+		"typescript": "catalog:"
+	},
+	"packageManager": "pnpm@11.20.0"
+}

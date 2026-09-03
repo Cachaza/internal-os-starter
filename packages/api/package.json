@@ -1,0 +1,27 @@
+{
+	"name": "@internal-os/api",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {},
+	"dependencies": {
+		"@internal-os/auth": "workspace:*",
+		"@internal-os/db": "workspace:*",
+		"@internal-os/env": "workspace:*",
+		"@trpc/client": "catalog:",
+		"@trpc/server": "catalog:",
+		"dotenv": "catalog:",
+		"next": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@internal-os/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

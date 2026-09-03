@@ -1,0 +1,24 @@
+{
+	"name": "@internal-os/auth",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {},
+	"dependencies": {
+		"@internal-os/db": "workspace:*",
+		"@internal-os/env": "workspace:*",
+		"better-auth": "catalog:",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@internal-os/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

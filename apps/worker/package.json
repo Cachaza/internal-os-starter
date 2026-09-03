@@ -1,0 +1,22 @@
+{
+	"name": "worker",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun --env-file=../web/.env --watch src/index.ts",
+		"build": "bun build src/index.ts --outdir dist --target bun",
+		"start": "bun --env-file=../web/.env dist/index.js",
+		"check-types": "tsc --noEmit",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@internal-os/db": "workspace:*",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@internal-os/config": "workspace:*",
+		"@types/bun": "^1.3.10",
+		"typescript": "catalog:"
+	}
+}
