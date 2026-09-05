@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
-import { db } from "./index";
-import { member } from "./schema/auth";
+import { db } from "./index.ts";
+import { member } from "./schema/auth.ts";
 
 export function findOrganizationMembership(
 	organizationId: string,

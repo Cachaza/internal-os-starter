@@ -1,7 +1,7 @@
 import { and, asc, eq, lt, lte, or, sql } from "drizzle-orm";
 
-import { db } from "./index";
-import { type Job, job } from "./schema/jobs";
+import { db } from "./index.ts";
+import { type Job, job } from "./schema/jobs.ts";
 
 const JOB_NOTIFICATION_CHANNEL = "job_available";
 
