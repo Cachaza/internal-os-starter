@@ -35,7 +35,8 @@
 			"cache": false
 		},
 		"db:migrate": {
-			"cache": false
+			"cache": false,
+			"passThroughEnv": ["DATABASE_URL"]
 		},
 		"db:studio": {
 			"cache": false,
