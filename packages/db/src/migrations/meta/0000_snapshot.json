@@ -1,5 +1,5 @@
 {
-	"id": "650b184d-7765-46ce-b1c0-3866000bf509",
+	"id": "6cf82966-eb22-40b4-8726-b8f361e1d9d3",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -479,6 +479,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false
+				},
+				"impersonated_by": {
+					"name": "impersonated_by",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {
@@ -553,6 +559,31 @@
 				"image": {
 					"name": "image",
 					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"role": {
+					"name": "role",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"banned": {
+					"name": "banned",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": false,
+					"default": false
+				},
+				"ban_reason": {
+					"name": "ban_reason",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"ban_expires": {
+					"name": "ban_expires",
+					"type": "timestamp",
 					"primaryKey": false,
 					"notNull": false
 				},
@@ -651,9 +682,149 @@
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false
+		},
+		"public.job": {
+			"name": "job",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"type": {
+					"name": "type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"payload": {
+					"name": "payload",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"status": {
+					"name": "status",
+					"type": "job_status",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'pending'"
+				},
+				"run_at": {
+					"name": "run_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"attempt_count": {
+					"name": "attempt_count",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 0
+				},
+				"locked_at": {
+					"name": "locked_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"lock_token": {
+					"name": "lock_token",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"last_error": {
+					"name": "last_error",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"completed_at": {
+					"name": "completed_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {
+				"job_runnable_idx": {
+					"name": "job_runnable_idx",
+					"columns": [
+						{
+							"expression": "status",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "run_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "created_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"job_processing_lease_idx": {
+					"name": "job_processing_lease_idx",
+					"columns": [
+						{
+							"expression": "status",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "locked_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		}
 	},
-	"enums": {},
+	"enums": {
+		"public.job_status": {
+			"name": "job_status",
+			"schema": "public",
+			"values": ["pending", "processing", "completed", "failed"]
+		}
+	},
 	"schemas": {},
 	"sequences": {},
 	"roles": {},

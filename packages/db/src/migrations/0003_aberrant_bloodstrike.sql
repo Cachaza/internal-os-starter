@@ -1,1 +1,0 @@
-CREATE INDEX "job_processing_lease_idx" ON "job" USING btree ("status","locked_at");

@@ -5,36 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1788350725460,
-			"tag": "0000_sturdy_nightmare",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1788351454283,
-			"tag": "0001_mighty_korath",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1788356682099,
-			"tag": "0002_amused_puma",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1788611773778,
-			"tag": "0003_aberrant_bloodstrike",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "7",
-			"when": 1788628225584,
-			"tag": "0004_clean_tana_nile",
+			"when": 1788628672720,
+			"tag": "0000_giant_drax",
 			"breakpoints": true
 		}
 	]
