@@ -9,7 +9,7 @@ A production-minded foundation for organization-owned internal tools. It combine
 - Organization-aware tRPC procedures
 - Drizzle ORM, PostgreSQL schema, and committed migrations
 - PostgreSQL-backed durable jobs with `LISTEN`/`NOTIFY`, scheduled execution, and retry policy
-- Standalone Bun worker
+- Standalone Node.js worker
 - Shared shadcn/ui and Tailwind package
 - Turborepo, pnpm, TypeScript, Biome, Docker, and GitHub Actions
 
@@ -19,7 +19,6 @@ The `system.test` job is an intentionally harmless vertical slice. It demonstrat
 
 - Node.js 24
 - pnpm 11.20.0 (declared in `package.json`)
-- Bun for running or building the worker
 - Docker for the supplied local PostgreSQL service
 
 ## Start locally

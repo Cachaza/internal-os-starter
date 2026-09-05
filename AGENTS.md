@@ -16,7 +16,7 @@
 
 ## Architecture and scope
 
-- Follow the existing monorepo architecture: Next.js and tRPC for the web boundary, Better Auth organizations for application ownership, Drizzle/PostgreSQL for persistence, shared UI primitives, and the standalone Bun worker for durable background work.
+- Follow the existing monorepo architecture: Next.js and tRPC for the web boundary, Better Auth organizations for application ownership, Drizzle/PostgreSQL for persistence, shared UI primitives, and the standalone Node.js worker for durable background work.
 - Organization membership is the business-data ownership boundary where applicable. Preserve it without adding speculative SaaS machinery.
 - Long-running, delayed, or retryable effects belong in the PostgreSQL job system and worker. Web requests should persist the synchronous transition and required job; do not use in-process timers or add another queue without demonstrated need.
 - Add domain models only when the product workflow provides evidence for them; keep the starter layer domain-neutral.
