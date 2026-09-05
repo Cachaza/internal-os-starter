@@ -1,4 +1,4 @@
-import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, lt, lte, or, sql } from "drizzle-orm";
 
 import { db } from "./index";
 import { type Job, job } from "./schema/jobs";
@@ -93,12 +93,64 @@ export async function subscribeToJobNotifications(
 	};
 }
 
-export async function claimNextRunnableJob(): Promise<Job | null> {
+export type ClaimJobOptions = {
+	leaseDurationMs: number;
+	maxAttempts: number;
+};
+
+function validateClaimOptions(options: ClaimJobOptions) {
+	if (
+		!Number.isInteger(options.leaseDurationMs) ||
+		options.leaseDurationMs < 1
+	) {
+		throw new Error(
+			`leaseDurationMs must be a positive integer; received ${options.leaseDurationMs}. Set JOB_LEASE_MS to the maximum acceptable recovery delay after a worker stops.`,
+		);
+	}
+	if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1) {
+		throw new Error(
+			`maxAttempts must be a positive integer; received ${options.maxAttempts}. Set JOB_MAX_ATTEMPTS to at least 1.`,
+		);
+	}
+}
+
+export async function claimNextRunnableJob(
+	options: ClaimJobOptions,
+): Promise<Job | null> {
+	validateClaimOptions(options);
+	const now = new Date();
+	const expiredBefore = new Date(now.getTime() - options.leaseDurationMs);
+
 	return db.transaction(async (transaction) => {
+		await transaction
+			.update(job)
+			.set({
+				status: "failed",
+				lockedAt: null,
+				lockToken: null,
+				lastError: `Worker lease expired after ${options.leaseDurationMs}ms and the job reached the ${options.maxAttempts}-attempt limit. Inspect the handler and retry the job explicitly.`,
+			})
+			.where(
+				and(
+					eq(job.status, "processing"),
+					lte(job.lockedAt, expiredBefore),
+					sql`${job.attemptCount} >= ${options.maxAttempts}`,
+				),
+			);
+
 		const [next] = await transaction
 			.select({ id: job.id })
 			.from(job)
-			.where(and(eq(job.status, "pending"), lte(job.runAt, new Date())))
+			.where(
+				or(
+					and(eq(job.status, "pending"), lte(job.runAt, now)),
+					and(
+						eq(job.status, "processing"),
+						lte(job.lockedAt, expiredBefore),
+						lt(job.attemptCount, options.maxAttempts),
+					),
+				),
+			)
 			.orderBy(asc(job.runAt), asc(job.createdAt))
 			.limit(1)
 			.for("update", { skipLocked: true });
@@ -110,35 +162,65 @@ export async function claimNextRunnableJob(): Promise<Job | null> {
 			.set({
 				status: "processing",
 				lockedAt: new Date(),
+				lockToken: crypto.randomUUID(),
 				attemptCount: sql`${job.attemptCount} + 1`,
 			})
-			.where(and(eq(job.id, next.id), eq(job.status, "pending")))
+			.where(eq(job.id, next.id))
 			.returning();
 
 		return claimed ?? null;
 	});
 }
 
-export async function markJobCompleted(id: string): Promise<void> {
+export async function renewJobLease(
+	id: string,
+	lockToken: string,
+): Promise<boolean> {
+	const renewed = await db
+		.update(job)
+		.set({ lockedAt: new Date() })
+		.where(
+			and(
+				eq(job.id, id),
+				eq(job.status, "processing"),
+				eq(job.lockToken, lockToken),
+			),
+		)
+		.returning({ id: job.id });
+	return renewed.length === 1;
+}
+
+export async function markJobCompleted(
+	id: string,
+	lockToken: string,
+): Promise<void> {
 	await db
 		.update(job)
 		.set({
 			status: "completed",
 			completedAt: new Date(),
 			lockedAt: null,
+			lockToken: null,
 			lastError: null,
 		})
-		.where(sql`${job.id} = ${id} AND ${job.status} = 'processing'`);
+		.where(
+			and(
+				eq(job.id, id),
+				eq(job.status, "processing"),
+				eq(job.lockToken, lockToken),
+			),
+		);
 }
 
 export async function markJobFailed(
 	id: string,
+	lockToken: string,
 	error: unknown,
 	maxAttempts: number,
 ): Promise<void> {
 	if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
 		throw new Error(
-			`maxAttempts must be a positive integer; received ${maxAttempts}`,
+			`maxAttempts must be a positive integer; received ${maxAttempts}. Set JOB_MAX_ATTEMPTS to at least 1.`,
 		);
 	}
 
@@ -150,8 +232,15 @@ export async function markJobFailed(
 			status: sql`CASE WHEN ${job.attemptCount} < ${maxAttempts} THEN 'pending'::job_status ELSE 'failed'::job_status END`,
 			runAt: new Date(),
 			lockedAt: null,
+			lockToken: null,
 			lastError: message,
 			completedAt: null,
 		})
-		.where(sql`${job.id} = ${id} AND ${job.status} = 'processing'`);
+		.where(
+			and(
+				eq(job.id, id),
+				eq(job.status, "processing"),
+				eq(job.lockToken, lockToken),
+			),
+		);
 }

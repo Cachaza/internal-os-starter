@@ -11,11 +11,25 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: internal_os_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       # Build-time placeholders satisfy the same validated contract as runtime.
       BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
       BETTER_AUTH_URL: http://localhost:3001
-      DATABASE_URL: postgresql://postgres:password@localhost:5432/internal_os
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/internal_os_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,4 +40,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec biome check .
       - run: pnpm run check-types
+      - run: pnpm run db:migrate
+      - run: pnpm run test:integration
       - run: pnpm run build
+      - run: docker compose config --quiet
+      - run: docker build --file apps/worker/Dockerfile --tag internal-os-worker:test .

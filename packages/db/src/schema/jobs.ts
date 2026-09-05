@@ -26,6 +26,7 @@ export const job = pgTable(
 		runAt: timestamp("run_at", { withTimezone: true }).defaultNow().notNull(),
 		attemptCount: integer("attempt_count").default(0).notNull(),
 		lockedAt: timestamp("locked_at", { withTimezone: true }),
+		lockToken: uuid("lock_token"),
 		lastError: text("last_error"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
@@ -34,6 +35,7 @@ export const job = pgTable(
 	},
 	(table) => [
 		index("job_runnable_idx").on(table.status, table.runAt, table.createdAt),
+		index("job_processing_lease_idx").on(table.status, table.lockedAt),
 	],
 );
 

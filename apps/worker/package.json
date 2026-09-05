@@ -4,9 +4,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "node --env-file=../web/.env --watch src/index.ts",
+		"dev": "node --env-file-if-exists=.env --watch src/index.ts",
 		"build": "tsc",
-		"start": "node --env-file=../web/.env dist/index.js",
+		"start": "node --env-file-if-exists=.env dist/index.js",
 		"check-types": "tsc --noEmit",
 		"typecheck": "tsc --noEmit"
 	},

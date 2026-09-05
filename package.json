@@ -10,6 +10,7 @@
 		"dev": "turbo run dev",
 		"build": "turbo run build",
 		"check-types": "turbo run check-types",
+		"test:integration": "turbo run test:integration -F @internal-os/db --",
 		"dev:web": "turbo run dev -F web --",
 		"dev:worker": "turbo run dev -F worker --",
 		"dev:stack": "pnpm run db:start && pnpm run db:migrate && pnpm run dev",

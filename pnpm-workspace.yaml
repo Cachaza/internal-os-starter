@@ -4,6 +4,10 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+# drizzle-kit still references a deprecated loader with an affected esbuild;
+# the patched release keeps the same build API used by that loader.
+overrides:
+  esbuild: ^0.25.4
 catalog:
   dotenv: ^17.4.2
   zod: ^4.4.3

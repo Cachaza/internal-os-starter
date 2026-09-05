@@ -32,6 +32,24 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    init: true
+    env_file:
+      - path: apps/worker/.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/internal_os
+      JOB_RECONCILE_INTERVAL_MS: ${JOB_RECONCILE_INTERVAL_MS:-30000}
+      JOB_LEASE_MS: ${JOB_LEASE_MS:-60000}
+      JOB_MAX_ATTEMPTS: ${JOB_MAX_ATTEMPTS:-3}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   postgres:
     image: postgres:18
     container_name: internal_os-postgres

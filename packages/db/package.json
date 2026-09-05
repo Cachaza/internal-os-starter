@@ -14,7 +14,8 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate:deploy": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
-		"db:migrate": "drizzle-kit migrate"
+		"db:migrate": "drizzle-kit migrate",
+		"test:integration": "node --test --test-concurrency=1 src/*.test.ts"
 	},
 	"dependencies": {
 		"@internal-os/env": "workspace:*",

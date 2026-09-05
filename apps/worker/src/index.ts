@@ -5,6 +5,7 @@ import {
 	type JobNotificationSubscription,
 	markJobCompleted,
 	markJobFailed,
+	renewJobLease,
 	subscribeToJobNotifications,
 } from "@internal-os/db";
 import { z } from "zod";
@@ -12,6 +13,7 @@ import { z } from "zod";
 const workerConfig = z
 	.object({
 		JOB_RECONCILE_INTERVAL_MS: z.coerce.number().int().positive(),
+		JOB_LEASE_MS: z.coerce.number().int().positive(),
 		JOB_MAX_ATTEMPTS: z.coerce.number().int().positive(),
 	})
 	.parse(process.env);
@@ -55,6 +57,27 @@ async function executeJob(
 	job: Awaited<ReturnType<typeof claimNextRunnableJob>>,
 ) {
 	if (!job) return;
+	if (!job.lockToken) {
+		throw new Error(`Claimed job ${job.id} has no lock token`);
+	}
+	const lockToken = job.lockToken;
+	// Derive the heartbeat from the configured lease so a healthy worker renews
+	// twice before expiry without introducing another independent timing policy.
+	const heartbeatIntervalMs = Math.max(
+		1,
+		Math.floor(workerConfig.JOB_LEASE_MS / 3),
+	);
+	const heartbeat = setInterval(() => {
+		void renewJobLease(job.id, lockToken)
+			.then((renewed) => {
+				if (!renewed) {
+					console.error(`Worker no longer owns the lease for job ${job.id}`);
+				}
+			})
+			.catch((error) => {
+				console.error(`Could not renew the lease for job ${job.id}`, error);
+			});
+	}, heartbeatIntervalMs);
 
 	try {
 		switch (job.type) {
@@ -64,10 +87,17 @@ async function executeJob(
 			default:
 				throw new Error(`No handler registered for job type: ${job.type}`);
 		}
-		await markJobCompleted(job.id);
+		await markJobCompleted(job.id, lockToken);
 	} catch (error) {
 		console.error(`Job ${job.id} failed`, error);
-		await markJobFailed(job.id, error, workerConfig.JOB_MAX_ATTEMPTS);
+		await markJobFailed(
+			job.id,
+			lockToken,
+			error,
+			workerConfig.JOB_MAX_ATTEMPTS,
+		);
+	} finally {
+		clearInterval(heartbeat);
 	}
 }
 
@@ -98,10 +128,16 @@ async function main() {
 		}
 
 		try {
-			let nextJob = await claimNextRunnableJob();
+			let nextJob = await claimNextRunnableJob({
+				leaseDurationMs: workerConfig.JOB_LEASE_MS,
+				maxAttempts: workerConfig.JOB_MAX_ATTEMPTS,
+			});
 			while (nextJob && !stopping) {
 				await executeJob(nextJob);
-				nextJob = await claimNextRunnableJob();
+				nextJob = await claimNextRunnableJob({
+					leaseDurationMs: workerConfig.JOB_LEASE_MS,
+					maxAttempts: workerConfig.JOB_MAX_ATTEMPTS,
+				});
 			}
 		} catch (error) {
 			console.error(
