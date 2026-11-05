@@ -16,8 +16,8 @@ import {
 import { Gauge, PanelsTopLeft, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 import UserMenu from "@/components/user-menu";
+import { siteConfig } from "@/config/site";
 
 const navigation = [
 	{ label: "Resumen", href: "/dashboard", icon: Gauge },
@@ -45,7 +45,9 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
 								<PanelsTopLeft className="size-4" />
 							</span>
 							<span className="grid min-w-0 flex-1 text-left leading-tight">
-								<span className="truncate font-semibold">Internal OS</span>
+								<span className="truncate font-semibold">
+									{siteConfig.name}
+								</span>
 								<span className="truncate text-muted-foreground">
 									{organizationName}
 								</span>

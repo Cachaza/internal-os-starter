@@ -1,110 +1,123 @@
 "use client";
 import { Button } from "@internal-os/ui/components/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@internal-os/ui/components/card";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Activity, Database, ServerCog, ShieldCheck } from "lucide-react";
-
+import { useState } from "react";
 import { trpc } from "@/utils/trpc";
 
-export default function Dashboard() {
-	const privateData = useQuery(trpc.privateData.queryOptions());
-	const systemTest = useMutation(trpc.enqueueSystemTest.mutationOptions());
-
-	return (
-		<div className="mx-auto w-full max-w-7xl space-y-6">
-			<div>
-				<p className="font-medium text-primary text-xs uppercase tracking-[0.16em]">
-					Centro de operaciones
-				</p>
-				<h1 className="mt-2 font-semibold text-3xl tracking-tight">Resumen</h1>
-				<p className="mt-1 text-muted-foreground text-sm">
-					Estado de la infraestructura disponible para el backoffice.
-				</p>
-			</div>
-
-			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-				<StatusCard
-					icon={Activity}
-					title="API privada"
-					value={privateData.isPending ? "Comprobando…" : "Conectada"}
-					description={privateData.data?.message ?? "Sesión autenticada"}
-				/>
-				<StatusCard
-					icon={ShieldCheck}
-					title="Acceso"
-					value="Protegido"
-					description="Sesión y organización activas"
-				/>
-				<StatusCard
-					icon={Database}
-					title="Persistencia"
-					value="PostgreSQL"
-					description="Datos y trabajos duraderos"
-				/>
-				<StatusCard
-					icon={ServerCog}
-					title="Worker"
-					value="Disponible"
-					description="Efectos en segundo plano"
-				/>
-			</div>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Comprobación del sistema</CardTitle>
-					<CardDescription>
-						Encola un trabajo de prueba en el worker duradero de PostgreSQL.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-					<Button
-						disabled={systemTest.isPending}
-						onClick={() =>
-							systemTest.mutate({ message: "Enqueued from the backoffice" })
-						}
-					>
-						{systemTest.isPending ? "Encolando…" : "Encolar prueba"}
-					</Button>
-					{systemTest.isSuccess && (
-						<p className="text-muted-foreground text-sm">
-							Trabajo encolado: {systemTest.data.id}
-						</p>
-					)}
-				</CardContent>
-			</Card>
-		</div>
-	);
-}
-
-type StatusCardProps = {
-	description: string;
-	icon: React.ComponentType<{ className?: string }>;
-	title: string;
-	value: string;
+const jobLabels = {
+	pending: "Pendiente",
+	processing: "En proceso",
+	completed: "Completado",
+	failed: "Fallido",
 };
-
-function StatusCard({
-	description,
-	icon: Icon,
-	title,
-	value,
-}: StatusCardProps) {
+export default function Dashboard() {
+	const context = useQuery(trpc.organizationContext.queryOptions());
+	const [jobId, setJobId] = useState<string | null>(null);
+	const systemTest = useMutation(
+		trpc.enqueueSystemTest.mutationOptions({
+			onSuccess: (job) => setJobId(job.id),
+		}),
+	);
+	const job = useQuery({
+		...trpc.systemTestJob.queryOptions({ id: jobId ?? "" }),
+		enabled: Boolean(jobId),
+	});
 	return (
-		<Card>
-			<CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-				<CardDescription>{title}</CardDescription>
-				<Icon className="size-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<p className="font-semibold text-2xl tracking-tight">{value}</p>
-				<p className="mt-1 text-muted-foreground text-xs">{description}</p>
-			</CardContent>
-		</Card>
+		<main id="main-content" className="mx-auto w-full max-w-4xl space-y-8">
+			<header>
+				<h1 className="font-semibold text-3xl">Resumen</h1>
+				<p className="mt-2 text-muted-foreground">
+					Comprueba el acceso y el procesamiento de trabajos de tu organización.
+				</p>
+			</header>
+			<section
+				aria-labelledby="access-title"
+				className="space-y-3 rounded-lg border p-6"
+			>
+				<h2 id="access-title" className="font-semibold text-xl">
+					Acceso a la organización
+				</h2>
+				{context.isPending ? (
+					<p role="status">Comprobando acceso…</p>
+				) : context.isError ? (
+					<div role="alert">
+						<p>No se pudo comprobar el acceso. {context.error.message}</p>
+						<Button variant="outline" onClick={() => void context.refetch()}>
+							Reintentar
+						</Button>
+					</div>
+				) : (
+					<p>
+						API conectada · {context.data.name} · {context.data.role}
+					</p>
+				)}
+			</section>
+			<section
+				aria-labelledby="system-test-title"
+				className="space-y-4 rounded-lg border p-6"
+			>
+				<h2 id="system-test-title" className="font-semibold text-xl">
+					Comprobación del sistema
+				</h2>
+				<p className="text-muted-foreground text-sm">
+					Encola una prueba y comprueba que el worker la completa. Esta prueba
+					no modifica datos del producto.
+				</p>
+				<Button
+					disabled={systemTest.isPending}
+					onClick={() =>
+						systemTest.mutate({ message: "Prueba desde el backoffice" })
+					}
+				>
+					{systemTest.isPending ? "Encolando…" : "Encolar prueba"}
+				</Button>
+				{systemTest.isError && (
+					<p role="alert" className="text-destructive">
+						No se pudo encolar la prueba. {systemTest.error.message} Vuelve a
+						intentarlo.
+					</p>
+				)}
+				<div role="status" className="space-y-2 break-words text-sm">
+					{jobId && <p>Trabajo: {jobId}</p>}
+					{job.isFetching && <p>Comprobando estado…</p>}
+					{job.data && (
+						<>
+							<p>
+								Estado: {jobLabels[job.data.status]} · Intentos:{" "}
+								{job.data.attemptCount}
+							</p>
+							{job.data.status === "pending" && (
+								<p>
+									Si sigue pendiente, comprueba que el worker está en ejecución.
+								</p>
+							)}
+							{job.data.status === "completed" && (
+								<p>Prueba completada por el worker.</p>
+							)}
+							{job.data.status === "failed" && (
+								<p className="text-destructive">
+									{job.data.lastError ||
+										"El worker no pudo completar la prueba."}
+								</p>
+							)}
+						</>
+					)}
+				</div>
+				{job.isError && (
+					<p role="alert" className="text-destructive text-sm">
+						No se pudo consultar el trabajo. {job.error.message}
+					</p>
+				)}
+				{jobId && (
+					<Button
+						variant="outline"
+						disabled={job.isFetching}
+						onClick={() => void job.refetch()}
+					>
+						Comprobar estado
+					</Button>
+				)}
+			</section>
+		</main>
 	);
 }

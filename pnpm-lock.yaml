@@ -99,6 +99,9 @@ importers:
       '@internal-os/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@internal-os/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@internal-os/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -228,6 +231,9 @@ importers:
       '@internal-os/config':
         specifier: workspace:*
         version: link:../config
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.23.1)(bun-types@1.4.0)(kysely@0.29.5)(pg@8.23.0)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

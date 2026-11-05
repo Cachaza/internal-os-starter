@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "./index.ts";
 import { findOrganizationMembership } from "./organizations.ts";
@@ -11,9 +12,13 @@ const ownedOrganizationId = `test-owned-${suffix}`;
 const otherOrganizationId = `test-other-${suffix}`;
 
 after(async () => {
-	await db.delete(member);
-	await db.delete(organization);
-	await db.delete(user);
+	await db.delete(member).where(eq(member.userId, userId));
+	await db
+		.delete(organization)
+		.where(
+			inArray(organization.id, [ownedOrganizationId, otherOrganizationId]),
+		);
+	await db.delete(user).where(eq(user.id, userId));
 	await db.$client.end();
 });
 

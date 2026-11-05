@@ -244,3 +244,24 @@ export async function markJobFailed(
 			),
 		);
 }
+
+// Only the harmless system-test slice is exposed; arbitrary handler payloads/errors stay private.
+export async function findSystemTestJob(id: string, organizationId: string) {
+	const [result] = await db
+		.select({
+			id: job.id,
+			status: job.status,
+			attemptCount: job.attemptCount,
+			lastError: job.lastError,
+			completedAt: job.completedAt,
+		})
+		.from(job)
+		.where(
+			and(
+				eq(job.id, id),
+				eq(job.type, "system.test"),
+				sql`${job.payload}->>'organizationId' = ${organizationId}`,
+			),
+		);
+	return result ?? null;
+}

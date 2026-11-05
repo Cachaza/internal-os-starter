@@ -10,7 +10,7 @@
 		"dev": "turbo run dev",
 		"build": "turbo run build",
 		"check-types": "turbo run check-types",
-		"test:integration": "turbo run test:integration -F @internal-os/db --",
+		"test:integration": "turbo run test:integration -F @internal-os/db -F @internal-os/api --",
 		"dev:web": "turbo run dev -F web --",
 		"dev:worker": "turbo run dev -F worker --",
 		"dev:stack": "pnpm run db:start && pnpm run db:migrate && pnpm run dev",
@@ -18,7 +18,7 @@
 		"db:studio": "turbo run db:studio -F @internal-os/db --",
 		"db:generate": "turbo run db:generate -F @internal-os/db --",
 		"db:migrate": "turbo run db:migrate -F @internal-os/db --",
-		"db:start": "docker compose up -d postgres",
+		"db:start": "docker compose up -d --wait postgres",
 		"db:watch": "docker compose up postgres",
 		"db:stop": "docker compose stop postgres",
 		"db:down": "docker compose down postgres",
@@ -26,7 +26,9 @@
 		"docker:up": "docker compose up -d --build",
 		"docker:down": "docker compose down",
 		"docker:logs": "docker compose logs -f",
-		"check": "biome check --write ."
+		"check": "biome check --write .",
+		"test": "node --test scripts/*.test.mjs && pnpm --filter @internal-os/env test",
+		"setup:local": "node scripts/setup-local.mjs"
 	},
 	"dependencies": {
 		"@internal-os/env": "workspace:*",

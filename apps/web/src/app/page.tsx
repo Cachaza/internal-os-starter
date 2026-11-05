@@ -4,6 +4,7 @@ import { Button } from "@internal-os/ui/components/button";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Database, PanelsTopLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { siteConfig } from "@/config/site";
 
 import { trpc } from "@/utils/trpc";
 
@@ -16,11 +17,11 @@ export default function Home() {
 			<div className="relative mx-auto grid min-h-full max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-[1.2fr_0.8fr] lg:px-10">
 				<section>
 					<div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-muted-foreground text-xs">
-						<span className="size-1.5 rounded-full bg-emerald-500" />
-						Starter operativo
+						<span className="size-1.5 rounded-full bg-primary" />
+						Base para herramientas internas
 					</div>
 					<p className="mb-3 font-medium text-primary text-sm uppercase tracking-[0.18em]">
-						Internal OS
+						{siteConfig.name}
 					</p>
 					<h1 className="max-w-3xl text-balance font-semibold text-4xl tracking-tight sm:text-5xl lg:text-6xl">
 						Una base sólida para tu próxima herramienta interna.
@@ -62,7 +63,7 @@ export default function Home() {
 						</div>
 						<div className="mt-7 grid gap-3">
 							<div className="flex items-center gap-3 rounded-lg border bg-background p-3">
-								<ShieldCheck className="size-5 text-emerald-600" />
+								<ShieldCheck className="size-5 text-primary" />
 								<div>
 									<p className="font-medium text-sm">Acceso protegido</p>
 									<p className="text-muted-foreground text-xs">
@@ -71,7 +72,7 @@ export default function Home() {
 								</div>
 							</div>
 							<div className="flex items-center gap-3 rounded-lg border bg-background p-3">
-								<Database className="size-5 text-sky-600" />
+								<Database className="size-5 text-primary" />
 								<div>
 									<p className="font-medium text-sm">Trabajo durable</p>
 									<p className="text-muted-foreground text-xs">
@@ -82,12 +83,12 @@ export default function Home() {
 						</div>
 						<div className="mt-5 flex items-center gap-2 border-t pt-4 text-xs">
 							<span
-								className={`size-2 rounded-full ${healthCheck.data ? "bg-emerald-500" : healthCheck.isLoading ? "bg-amber-500" : "bg-destructive"}`}
+								className={`size-2 rounded-full ${!healthCheck.isError && healthCheck.data ? "bg-primary" : healthCheck.isLoading ? "bg-muted-foreground" : "bg-destructive"}`}
 							/>
 							<span className="text-muted-foreground">
 								{healthCheck.isLoading
 									? "Comprobando servicios…"
-									: healthCheck.data
+									: !healthCheck.isError && healthCheck.data
 										? "API conectada"
 										: "API no disponible"}
 							</span>

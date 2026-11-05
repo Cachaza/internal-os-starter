@@ -5,9 +5,9 @@ import { Input } from "@internal-os/ui/components/input";
 import { Label } from "@internal-os/ui/components/label";
 import { useForm } from "@tanstack/react-form";
 import { Building2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import z from "zod";
+import { siteConfig } from "@/config/site";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -37,8 +37,6 @@ function toSlug(value: string) {
 }
 
 export default function CreateOrganizationForm() {
-	const router = useRouter();
-
 	const form = useForm({
 		defaultValues: {
 			name: "",
@@ -53,8 +51,8 @@ export default function CreateOrganizationForm() {
 				{
 					onSuccess: () => {
 						toast.success("Organización creada");
-						router.push("/dashboard");
-						router.refresh();
+						// Organization creation switches tenant; discard all cached queries.
+						window.location.assign("/dashboard");
 					},
 					onError: (error) => {
 						toast.error(
@@ -78,18 +76,25 @@ export default function CreateOrganizationForm() {
 			<p className="mt-6 font-medium text-primary text-xs uppercase tracking-[0.16em]">
 				Último paso
 			</p>
-			<h1 className="mt-2 font-semibold text-3xl tracking-tight">
+			<h2 className="mt-2 font-semibold text-3xl tracking-tight">
 				Crea tu organización
-			</h1>
+			</h2>
 			<p className="mt-2 text-muted-foreground text-sm">
-				Será el espacio de trabajo compartido de tu equipo en Internal OS.
+				Será tu espacio de trabajo en {siteConfig.name}.
 			</p>
 
 			<form
 				onSubmit={(event) => {
 					event.preventDefault();
 					event.stopPropagation();
-					form.handleSubmit();
+					const element = event.currentTarget;
+					void form
+						.handleSubmit()
+						.then(() =>
+							element
+								.querySelector<HTMLElement>('[aria-invalid="true"]')
+								?.focus(),
+						);
 				}}
 				className="mt-8 space-y-5"
 			>
@@ -100,6 +105,9 @@ export default function CreateOrganizationForm() {
 							<Input
 								id={field.name}
 								name={field.name}
+								aria-invalid={field.state.meta.errors.length > 0}
+								aria-describedby={`${field.name}-errors`}
+								autoComplete="name"
 								placeholder="Acme"
 								value={field.state.value}
 								onBlur={field.handleBlur}
@@ -112,11 +120,13 @@ export default function CreateOrganizationForm() {
 									}
 								}}
 							/>
-							{field.state.meta.errors.map((error) => (
-								<p key={error?.message} className="text-destructive text-xs">
-									{error?.message}
-								</p>
-							))}
+							<div id={`${field.name}-errors`} aria-live="polite">
+								{field.state.meta.errors.map((error) => (
+									<p key={error?.message} className="text-destructive text-xs">
+										{error?.message}
+									</p>
+								))}
+							</div>
 						</div>
 					)}
 				</form.Field>
@@ -128,6 +138,9 @@ export default function CreateOrganizationForm() {
 							<Input
 								id={field.name}
 								name={field.name}
+								aria-invalid={field.state.meta.errors.length > 0}
+								aria-describedby={`${field.name}-errors`}
+								autoComplete="off"
 								placeholder="mi-organizacion"
 								value={field.state.value}
 								onBlur={field.handleBlur}
@@ -138,27 +151,24 @@ export default function CreateOrganizationForm() {
 							<p className="text-muted-foreground text-xs">
 								Debe ser único. Puedes cambiarlo si ya está en uso.
 							</p>
-							{field.state.meta.errors.map((error) => (
-								<p key={error?.message} className="text-destructive text-xs">
-									{error?.message}
-								</p>
-							))}
+							<div id={`${field.name}-errors`} aria-live="polite">
+								{field.state.meta.errors.map((error) => (
+									<p key={error?.message} className="text-destructive text-xs">
+										{error?.message}
+									</p>
+								))}
+							</div>
 						</div>
 					)}
 				</form.Field>
 
 				<form.Subscribe
 					selector={(state) => ({
-						canSubmit: state.canSubmit,
 						isSubmitting: state.isSubmitting,
 					})}
 				>
-					{({ canSubmit, isSubmitting }) => (
-						<Button
-							type="submit"
-							className="w-full"
-							disabled={!canSubmit || isSubmitting}
-						>
+					{({ isSubmitting }) => (
+						<Button type="submit" className="w-full" disabled={isSubmitting}>
 							{isSubmitting ? "Creando organización…" : "Crear y continuar"}
 						</Button>
 					)}

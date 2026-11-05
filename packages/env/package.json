@@ -18,5 +18,8 @@
 		"@internal-os/config": "workspace:*",
 		"@types/node": "catalog:",
 		"typescript": "catalog:"
+	},
+	"scripts": {
+		"test": "node --test src/*.test.ts"
 	}
 }

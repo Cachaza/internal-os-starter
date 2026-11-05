@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 
 import "../index.css";
 import Header from "@/components/header";
 import Providers from "@/components/providers";
 
 export const metadata: Metadata = {
-	title: "Internal OS",
-	description: "Sistema interno de trabajo de Internal",
+	title: siteConfig.name,
+	description: siteConfig.description,
 };
 
 export default function RootLayout({

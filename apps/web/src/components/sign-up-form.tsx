@@ -2,7 +2,6 @@ import { Button } from "@internal-os/ui/components/button";
 import { Input } from "@internal-os/ui/components/input";
 import { Label } from "@internal-os/ui/components/label";
 import { useForm } from "@tanstack/react-form";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -15,7 +14,6 @@ export default function SignUpForm({
 }: {
 	onSwitchToSignIn: () => void;
 }) {
-	const router = useRouter();
 	const { isPending } = authClient.useSession();
 
 	const form = useForm({
@@ -33,20 +31,22 @@ export default function SignUpForm({
 				},
 				{
 					onSuccess: () => {
-						router.push("/organization-required");
-						toast.success("Sign up successful");
+						window.location.assign("/organizations");
+						toast.success("Cuenta creada");
 					},
-					onError: (error) => {
-						toast.error(error.error.message || error.error.statusText);
+					onError: () => {
+						toast.error(
+							"No se pudo completar el acceso. Comprueba tus datos e inténtalo de nuevo.",
+						);
 					},
 				},
 			);
 		},
 		validators: {
 			onSubmit: z.object({
-				name: z.string().min(2, "Name must be at least 2 characters"),
-				email: z.email("Invalid email address"),
-				password: z.string().min(8, "Password must be at least 8 characters"),
+				name: z.string().min(2, "Escribe un nombre de al menos 2 caracteres"),
+				email: z.email("Escribe un correo electrónico válido"),
+				password: z.string().min(8, "Usa al menos 8 caracteres"),
 			}),
 		},
 	});
@@ -71,7 +71,14 @@ export default function SignUpForm({
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					const element = e.currentTarget;
+					void form
+						.handleSubmit()
+						.then(() =>
+							element
+								.querySelector<HTMLElement>('[aria-invalid="true"]')
+								?.focus(),
+						);
 				}}
 				className="mt-8 space-y-5"
 			>
@@ -83,16 +90,21 @@ export default function SignUpForm({
 								<Input
 									id={field.name}
 									name={field.name}
+									aria-invalid={field.state.meta.errors.length > 0}
+									aria-describedby={`${field.name}-errors`}
+									autoComplete="name"
 									placeholder="Tu nombre"
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
-								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
-										{error?.message}
-									</p>
-								))}
+								<div id={`${field.name}-errors`} aria-live="polite">
+									{field.state.meta.errors.map((error) => (
+										<p key={error?.message} className="text-destructive">
+											{error?.message}
+										</p>
+									))}
+								</div>
 							</div>
 						)}
 					</form.Field>
@@ -106,17 +118,22 @@ export default function SignUpForm({
 								<Input
 									id={field.name}
 									name={field.name}
+									aria-invalid={field.state.meta.errors.length > 0}
+									aria-describedby={`${field.name}-errors`}
+									autoComplete="email"
 									type="email"
 									placeholder="nombre@empresa.com"
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
-								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
-										{error?.message}
-									</p>
-								))}
+								<div id={`${field.name}-errors`} aria-live="polite">
+									{field.state.meta.errors.map((error) => (
+										<p key={error?.message} className="text-destructive">
+											{error?.message}
+										</p>
+									))}
+								</div>
 							</div>
 						)}
 					</form.Field>
@@ -130,17 +147,22 @@ export default function SignUpForm({
 								<Input
 									id={field.name}
 									name={field.name}
+									aria-invalid={field.state.meta.errors.length > 0}
+									aria-describedby={`${field.name}-errors`}
+									autoComplete="new-password"
 									type="password"
 									placeholder="Mínimo 8 caracteres"
 									value={field.state.value}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
-								{field.state.meta.errors.map((error) => (
-									<p key={error?.message} className="text-red-500">
-										{error?.message}
-									</p>
-								))}
+								<div id={`${field.name}-errors`} aria-live="polite">
+									{field.state.meta.errors.map((error) => (
+										<p key={error?.message} className="text-destructive">
+											{error?.message}
+										</p>
+									))}
+								</div>
 							</div>
 						)}
 					</form.Field>
@@ -148,16 +170,11 @@ export default function SignUpForm({
 
 				<form.Subscribe
 					selector={(state) => ({
-						canSubmit: state.canSubmit,
 						isSubmitting: state.isSubmitting,
 					})}
 				>
-					{({ canSubmit, isSubmitting }) => (
-						<Button
-							type="submit"
-							className="w-full"
-							disabled={!canSubmit || isSubmitting}
-						>
+					{({ isSubmitting }) => (
+						<Button type="submit" className="w-full" disabled={isSubmitting}>
 							{isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
 						</Button>
 					)}
