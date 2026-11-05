@@ -18,8 +18,9 @@ import { Skeleton } from "@internal-os/ui/components/skeleton";
 import { ChevronsUpDown, CircleUserRound, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { queryClient } from "@/utils/trpc";
 
 export default function UserMenu({
 	variant = "header",
@@ -41,16 +42,27 @@ export default function UserMenu({
 
 	if (!session) {
 		return (
-			<Link href="/login">
-				<Button variant="outline">Sign In</Button>
-			</Link>
+			<Button
+				nativeButton={false}
+				variant="outline"
+				render={<Link href="/login" />}
+			>
+				Iniciar sesión
+			</Button>
 		);
 	}
 
 	const signOut = () => {
 		authClient.signOut({
 			fetchOptions: {
-				onSuccess: () => router.push("/login"),
+				onSuccess: () => {
+					queryClient.clear();
+					router.push("/login");
+					router.refresh();
+				},
+				onError: () => {
+					toast.error("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+				},
 			},
 		});
 	};

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, beforeEach, test } from "node:test";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "./index.ts";
 import {
@@ -11,6 +11,18 @@ import {
 } from "./jobs.ts";
 import { job } from "./schema/jobs.ts";
 
+const createdIds: string[] = [];
+const enqueueTestJob: typeof enqueueJob = async (input) => {
+	const result = await enqueueJob(input);
+	createdIds.push(result.id);
+	return result;
+};
+async function cleanup() {
+	if (createdIds.length)
+		await db.delete(job).where(inArray(job.id, createdIds));
+	createdIds.length = 0;
+}
+
 const claimOptions = {
 	// Tests move locked_at to the Unix epoch, so the lease is unambiguously expired.
 	leaseDurationMs: 60_000,
@@ -18,16 +30,19 @@ const claimOptions = {
 };
 
 beforeEach(async () => {
-	await db.delete(job);
+	await cleanup();
 });
 
 after(async () => {
-	await db.delete(job);
+	await cleanup();
 	await db.$client.end();
 });
 
 test("two concurrent workers cannot claim the same job", async () => {
-	const created = await enqueueJob({ type: "test.concurrent", payload: {} });
+	const created = await enqueueTestJob({
+		type: "test.concurrent",
+		payload: {},
+	});
 	const claims = await Promise.all([
 		claimNextRunnableJob(claimOptions),
 		claimNextRunnableJob(claimOptions),
@@ -39,7 +54,7 @@ test("two concurrent workers cannot claim the same job", async () => {
 
 test("a scheduled job is not claimed before run_at", async () => {
 	// One minute keeps the job safely beyond the duration of this focused test.
-	await enqueueJob({
+	await enqueueTestJob({
 		type: "test.scheduled",
 		payload: {},
 		runAt: new Date(Date.now() + 60_000),
@@ -50,7 +65,7 @@ test("a scheduled job is not claimed before run_at", async () => {
 
 test("handler failures stop at the configured attempt limit", async () => {
 	const options = { ...claimOptions, maxAttempts: 2 };
-	const created = await enqueueJob({ type: "test.retry", payload: {} });
+	const created = await enqueueTestJob({ type: "test.retry", payload: {} });
 
 	const first = await claimNextRunnableJob(options);
 	assert.equal(first?.id, created.id);
@@ -79,7 +94,7 @@ test("handler failures stop at the configured attempt limit", async () => {
 });
 
 test("an expired lease makes an interrupted job claimable", async () => {
-	const created = await enqueueJob({ type: "test.recovery", payload: {} });
+	const created = await enqueueTestJob({ type: "test.recovery", payload: {} });
 	await claimNextRunnableJob(claimOptions);
 	await db
 		.update(job)
@@ -92,7 +107,7 @@ test("an expired lease makes an interrupted job claimable", async () => {
 });
 
 test("a recovered job rejects completion from its previous owner", async () => {
-	const created = await enqueueJob({ type: "test.ownership", payload: {} });
+	const created = await enqueueTestJob({ type: "test.ownership", payload: {} });
 	const previousOwner = await claimNextRunnableJob(claimOptions);
 	assert.ok(previousOwner?.lockToken);
 	await db
@@ -110,7 +125,7 @@ test("a recovered job rejects completion from its previous owner", async () => {
 
 test("an expired lease fails a job that exhausted its attempts", async () => {
 	const options = { ...claimOptions, maxAttempts: 1 };
-	const created = await enqueueJob({ type: "test.exhausted", payload: {} });
+	const created = await enqueueTestJob({ type: "test.exhausted", payload: {} });
 	await claimNextRunnableJob(options);
 	await db
 		.update(job)

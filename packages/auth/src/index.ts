@@ -1,14 +1,12 @@
-import { createDb } from "@internal-os/db";
+import { db } from "@internal-os/db";
 import * as schema from "@internal-os/db/schema/auth";
 import { env } from "@internal-os/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin, organization } from "better-auth/plugins";
+import { organization } from "better-auth/plugins";
 
 export function createAuth() {
-	const db = createDb();
-
 	return betterAuth({
 		database: drizzleAdapter(db, {
 			provider: "pg",
@@ -21,7 +19,7 @@ export function createAuth() {
 		},
 		secret: env.BETTER_AUTH_SECRET,
 		baseURL: env.BETTER_AUTH_URL,
-		plugins: [organization(), admin(), nextCookies()],
+		plugins: [organization(), nextCookies()],
 	});
 }
 

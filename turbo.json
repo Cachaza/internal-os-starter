@@ -21,7 +21,12 @@
 		},
 		"test:integration": {
 			"cache": false,
-			"passThroughEnv": ["DATABASE_URL"]
+			"passThroughEnv": [
+				"DATABASE_URL",
+				"TEST_DATABASE_URL",
+				"BETTER_AUTH_SECRET",
+				"BETTER_AUTH_URL"
+			]
 		},
 		"dev": {
 			"cache": false,
@@ -36,7 +41,12 @@
 		},
 		"db:migrate": {
 			"cache": false,
-			"passThroughEnv": ["DATABASE_URL"]
+			"passThroughEnv": [
+				"DATABASE_URL",
+				"TEST_DATABASE_URL",
+				"BETTER_AUTH_SECRET",
+				"BETTER_AUTH_URL"
+			]
 		},
 		"db:studio": {
 			"cache": false,
@@ -54,6 +64,15 @@
 		},
 		"db:down": {
 			"cache": false
+		},
+		"@internal-os/api#test:integration": {
+			"dependsOn": ["@internal-os/db#test:integration"],
+			"cache": false,
+			"passThroughEnv": [
+				"TEST_DATABASE_URL",
+				"BETTER_AUTH_SECRET",
+				"BETTER_AUTH_URL"
+			]
 		}
 	}
 }

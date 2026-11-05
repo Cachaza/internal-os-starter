@@ -14,3 +14,9 @@ export function findOrganizationMembership(
 		),
 	});
 }
+
+export function findOrganization(id: string) {
+	return db.query.organization.findFirst({
+		where: (organization, { eq }) => eq(organization.id, id),
+	});
+}

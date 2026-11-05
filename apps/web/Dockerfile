@@ -1,12 +1,12 @@
 FROM node:24-slim AS builder
-RUN npm install -g pnpm@11
+RUN npm install -g pnpm@11.20.0
 WORKDIR /app
 ENV SKIP_ENV_VALIDATION=1
 # the build evaluates the auth config; the real secret comes from compose at runtime
 ENV BETTER_AUTH_SECRET=build-time-placeholder-secret-not-used-at-runtime
 
 COPY . .
-RUN --mount=type=cache,target=/pnpm-store pnpm install --store-dir /pnpm-store
+RUN --mount=type=cache,target=/pnpm-store pnpm install --frozen-lockfile --store-dir /pnpm-store
 
 ENV NODE_ENV=production
 RUN cd apps/web && pnpm run build

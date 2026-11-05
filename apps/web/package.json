@@ -28,7 +28,8 @@
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"sonner": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:",
+		"@internal-os/db": "workspace:*"
 	},
 	"devDependencies": {
 		"@internal-os/config": "workspace:*",

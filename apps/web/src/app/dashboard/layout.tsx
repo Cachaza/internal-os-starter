@@ -1,31 +1,28 @@
-import { auth } from "@internal-os/auth";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@internal-os/ui/components/sidebar";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
 import { AppSidebar } from "@/components/app-sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { requireActiveOrganization } from "@/lib/active-organization";
 
 export default async function BackofficeLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const requestHeaders = await headers();
-	const session = await auth.api.getSession({ headers: requestHeaders });
-	if (!session?.user) redirect("/login");
-
-	const activeOrganization = await auth.api.getFullOrganization({
-		headers: requestHeaders,
-	});
-	if (!activeOrganization) redirect("/organization-required");
+	const { organization: activeOrganization } =
+		await requireActiveOrganization();
 
 	return (
 		<SidebarProvider>
+			<a
+				href="#main-content"
+				className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:p-3"
+			>
+				Saltar al contenido
+			</a>
 			<AppSidebar organizationName={activeOrganization.name} />
 			<SidebarInset className="min-h-svh overflow-hidden">
 				<header className="flex h-14 shrink-0 items-center justify-between border-b px-4">

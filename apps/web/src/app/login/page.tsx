@@ -2,9 +2,9 @@
 
 import { PanelsTopLeft, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-
 import SignInForm from "@/components/sign-in-form";
 import SignUpForm from "@/components/sign-up-form";
+import { siteConfig } from "@/config/site";
 
 export default function LoginPage() {
 	const [showSignIn, setShowSignIn] = useState(true);
@@ -18,7 +18,7 @@ export default function LoginPage() {
 							<PanelsTopLeft className="size-4" />
 						</div>
 						<div>
-							<p className="font-semibold">Internal OS</p>
+							<p className="font-semibold">{siteConfig.name}</p>
 							<p className="text-muted-foreground text-xs">
 								Acceso al backoffice
 							</p>
@@ -39,7 +39,7 @@ export default function LoginPage() {
 						<PanelsTopLeft className="size-5" />
 					</div>
 					<div>
-						<p className="font-semibold text-lg">Internal OS</p>
+						<p className="font-semibold text-lg">{siteConfig.name}</p>
 						<p className="text-background/60 text-xs">Herramientas internas</p>
 					</div>
 				</div>

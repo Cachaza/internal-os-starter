@@ -13,7 +13,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 	if (!ctx.session) {
 		throw new TRPCError({
 			code: "UNAUTHORIZED",
-			message: "Authentication required",
+			message: "Inicia sesión para continuar",
 			cause: "No session",
 		});
 	}
@@ -31,7 +31,7 @@ export const organizationProcedure = protectedProcedure.use(
 		if (!organizationId) {
 			throw new TRPCError({
 				code: "FORBIDDEN",
-				message: "An active organization is required",
+				message: "Elige una organización para continuar",
 			});
 		}
 
@@ -42,7 +42,8 @@ export const organizationProcedure = protectedProcedure.use(
 		if (!membership) {
 			throw new TRPCError({
 				code: "FORBIDDEN",
-				message: "Organization membership is required",
+				message:
+					"No tienes acceso a esta organización. Elige otra organización.",
 			});
 		}
 
